@@ -10,9 +10,9 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
-from langchain_core.documents import Document
+from langchain_core.documents import Document  # ✅ import atualizado
 
-# 🔐 Chave da OpenAI
+# 🔐 Chave da OpenAI via ambiente (.env ou secrets)
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # 🔧 Função para carregar e limpar automaticamente o data.csv
@@ -63,9 +63,9 @@ def carregar_chain_com_memoria():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings()  # ✅ sem api_key aqui
 
-    # ✅ Diretório persistente necessário para Chroma
+    # ✅ persistência obrigatória do Chroma
     persist_directory = "chroma_db"
     vectorstore = Chroma.from_documents(
         docs,
