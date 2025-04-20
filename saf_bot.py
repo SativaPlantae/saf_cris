@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
+import re
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import OpenAIEmbeddings
@@ -13,10 +14,50 @@ from langchain.schema import Document
 # 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# 🔄 Carrega planilha e configura a cadeia com memória
+# 🔧 Função para carregar e limpar automaticamente o data.csv
+def carregar_e_limpar_dados(caminho_csv: str) -> pd.DataFrame:
+    df = pd.read_csv(caminho_csv, sep=";")
+
+    # Limpar colunas monetárias e numéricas
+    def limpar_moeda(valor):
+        if isinstance(valor, str):
+            valor = valor.replace("R$", "").replace(".", "").replace(",", ".").strip()
+            try:
+                return float(valor)
+            except:
+                return valor
+        return valor
+
+    colunas_monetarias = [
+        "Faturamento anual", "Despesas anuais", "Lucro anual", "Preço de venda"
+    ]
+
+    for coluna in colunas_monetarias:
+        if coluna in df.columns:
+            df[coluna] = df[coluna].apply(limpar_moeda)
+
+    # Separar valor e unidade da produção por indivíduo
+    def separar_valor_unidade(valor):
+        if isinstance(valor, str):
+            match = re.match(r"([\d,\.]+)\s*(\w+)", valor.strip())
+            if match:
+                valor_numerico = match.group(1).replace(",", ".")
+                unidade = match.group(2)
+                return float(valor_numerico), unidade
+        return None, None
+
+    if "Produção por indivíduo (kg, un ou m³)" in df.columns:
+        df["Producao_individual_valor"], df["Producao_individual_unidade"] = zip(
+            *df["Produção por indivíduo (kg, un ou m³)"].map(separar_valor_unidade)
+        )
+        df.drop(columns=["Produção por indivíduo (kg, un ou m³)"], inplace=True)
+
+    return df
+
+# 🧠 Cadeia com memória
 @st.cache_resource
 def carregar_chain_com_memoria():
-    df = pd.read_csv("data.csv")
+    df = carregar_e_limpar_dados("data.csv")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
     document = Document(page_content=texto_unico)
 
@@ -56,25 +97,21 @@ Resposta:"""
 
     return chain
 
-# ⚙️ Configuração visual
+# 🌱 Interface visual
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
 
-# Inicializa o histórico visual (mensagens)
 if "mensagens" not in st.session_state:
     st.session_state.mensagens = []
 
-# Inicializa a cadeia com memória
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = carregar_chain_com_memoria()
 
-# Exibição do histórico completo
 for remetente, mensagem in st.session_state.mensagens:
     with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant", avatar=remetente):
         st.markdown(mensagem)
 
-# Campo de entrada sempre no fim
 user_input = st.chat_input("Digite sua pergunta aqui...")
 
 if user_input:
