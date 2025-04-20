@@ -64,7 +64,15 @@ def carregar_chain_com_memoria():
     docs = splitter.split_documents([document])
 
     embeddings = OpenAIEmbeddings(api_key=openai_api_key)
-    vectorstore = Chroma.from_documents(docs, embedding=embeddings)
+
+    # ✅ Diretório persistente necessário para Chroma
+    persist_directory = "chroma_db"
+    vectorstore = Chroma.from_documents(
+        docs,
+        embedding=embeddings,
+        persist_directory=persist_directory
+    )
+
     retriever = vectorstore.as_retriever()
 
     prompt_template = PromptTemplate(
