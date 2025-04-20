@@ -95,4 +95,4 @@ if user_input:
     # Exibe resposta do bot
     with st.chat_message("assistant"):
         st.markdown(resposta)
-    st.session_state.mensagens.append(("🌬", resposta))
+    st.session_state.mensagens.append(("🦗", resposta))
