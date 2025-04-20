@@ -18,7 +18,7 @@ def carregar_qa_chain():
     df = pd.read_csv("data.csv")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
 
-    # 2. Transformando em documentos LangChain
+    # 2. Transformando em documento LangChain
     document = Document(page_content=texto_unico)
 
     # 3. Split
@@ -26,16 +26,22 @@ def carregar_qa_chain():
     docs = splitter.split_documents([document])
 
     # 4. Vetorização
-    vectorstore = FAISS.from_documents(docs, OpenAIEmbeddings(openai_api_key=openai_api_key))
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
-    # 5. Novo prompt para o SAF
+    # 5. Prompt mais natural, sem repetição robótica
     prompt_template = PromptTemplate(
         input_variables=["context", "question"],
         template="""
-Você é um assistente virtual treinado com base em uma planilha de dados técnicos sobre o Sistema Agroflorestal SAF Cristal. Use uma linguagem didática, acessível e amigável, como se estivesse conversando com um estudante ou alguém curioso pelo assunto.
+Você é um assistente virtual treinado com base em uma planilha de dados técnicos sobre o Sistema Agroflorestal SAF Cristal.
 
-Se a resposta não estiver nos dados, diga algo como: "Hmm, isso não está muito claro por aqui, mas posso tentar ajudar com base no que eu tenho."
+Sua linguagem é didática, amigável e acessível, como se estivesse conversando com um estudante ou profissional da área ambiental. Evite repetições, formalismos excessivos e frases robóticas.
+
+Caso não tenha certeza da resposta, seja transparente e diga isso de forma leve, como:
+- "Não tenho certeza absoluta, mas posso te contar o que aparece por aqui."
+- "Parece que esse detalhe não está explícito, mas vamos lá..."
+- "Não encontrei exatamente isso, mas com base no que sei, diria que..."
 
 -------------------
 {context}
@@ -44,7 +50,7 @@ Pergunta: {question}
 Resposta:"""
     )
 
-    # 6. Modelo
+    # 6. Modelo LLM
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.5,
@@ -62,19 +68,19 @@ Resposta:"""
     return qa_chain
 
 # 🌐 Interface do app
-st.set_page_config(page_title="Chatbot SAF Cristal - Sativa Plantae", page_icon="🌱")
-st.title("🌱 Chatbot do SAF Cristal")
+st.set_page_config(page_title="Chatbot SAF Cristal - Sativa Plantae", page_icon="🌬")
+st.title("🌬 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
 
-# Histórico
+# Histórico de conversa
 if "mensagens" not in st.session_state:
     st.session_state.mensagens = []
 
 qa_chain = carregar_qa_chain()
 
-# Formulário
-with st.form(key="formulario_chat"):
-    user_input = st.text_input("Você:", placeholder="Pergunte algo sobre o SAF Cristal...")
+# Formulário de envio
+with st.form(key="formulario_chat", clear_on_submit=True):
+    user_input = st.text_input("🧑‍🌾 Você:", placeholder="Pergunte algo sobre o SAF Cristal...")
     submit = st.form_submit_button("Enviar")
 
 # Processamento
@@ -82,14 +88,11 @@ if submit and user_input:
     with st.spinner("Consultando o SAF..."):
         try:
             resposta = qa_chain.run(user_input)
-            st.session_state.mensagens.append(("Você", user_input))
-            st.session_state.mensagens.append(("Chatbot", resposta))
+            st.session_state.mensagens.append(("🧑‍🌾", user_input))
+            st.session_state.mensagens.append(("🌬", resposta))
         except Exception as e:
             st.error(f"Ocorreu um erro: {e}")
 
-# Exibição do histórico
+# Exibição da conversa completa
 for remetente, mensagem in st.session_state.mensagens:
-    if remetente == "Você":
-        st.markdown(f"**🧑 {remetente}:** {mensagem}")
-    else:
-        st.markdown(f"**🤖 {remetente}:** {mensagem}")
+    st.markdown(f"**{remetente}**: {mensagem}")
