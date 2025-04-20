@@ -4,7 +4,7 @@ import pandas as pd
 import re
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
@@ -64,7 +64,7 @@ def carregar_chain_com_memoria():
     docs = splitter.split_documents([document])
 
     embeddings = OpenAIEmbeddings(api_key=openai_api_key)
-    vectorstore = FAISS.from_documents(docs, embeddings)
+    vectorstore = Chroma.from_documents(docs, embedding=embeddings)
     retriever = vectorstore.as_retriever()
 
     prompt_template = PromptTemplate(
