@@ -89,7 +89,7 @@ if submit and user_input:
         try:
             resposta = qa_chain.run(user_input)
             st.session_state.mensagens.append(("🧑‍🌾", user_input))
-            st.session_state.mensagens.append(("🌬", resposta))
+            st.session_state.mensagens.append(("🦗", resposta))
         except Exception as e:
             st.error(f"Ocorreu um erro: {e}")
 
