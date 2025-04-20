@@ -13,10 +13,9 @@ from langchain.schema import Document
 # 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# 🔄 Carrega planilha e configura cadeia com memória
+# 🔄 Carrega planilha e configura a cadeia com memória
 @st.cache_resource
 def carregar_chain_com_memoria():
-    # Carregando dados do SAF Cristal
     df = pd.read_csv("data.csv")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
     document = Document(page_content=texto_unico)
@@ -28,7 +27,6 @@ def carregar_chain_com_memoria():
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
-    # Prompt com estilo natural
     prompt_template = PromptTemplate(
         input_variables=["chat_history", "context", "question"],
         template="""
@@ -59,8 +57,8 @@ Resposta:"""
     return chain
 
 # ⚙️ Configuração visual
-st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🌬")
-st.title("🌬 Chatbot do SAF Cristal")
+st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
+st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
 
 # Inicializa o histórico visual (mensagens)
@@ -71,28 +69,25 @@ if "mensagens" not in st.session_state:
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = carregar_chain_com_memoria()
 
-# Exibição do histórico
+# Exibição do histórico completo
 for remetente, mensagem in st.session_state.mensagens:
-    with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant"):
+    with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant", avatar=remetente):
         st.markdown(mensagem)
 
-# Input no final
+# Campo de entrada sempre no fim
 user_input = st.chat_input("Digite sua pergunta aqui...")
 
 if user_input:
-    # Exibe pergunta do usuário
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="🧑‍🌾"):
         st.markdown(user_input)
     st.session_state.mensagens.append(("🧑‍🌾", user_input))
 
-    # Gera resposta
     with st.spinner("Consultando o SAF Cristal..."):
         try:
             resposta = st.session_state.qa_chain.run(user_input)
         except Exception as e:
             resposta = f"⚠️ Ocorreu um erro: {e}"
 
-    # Exibe resposta do bot
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🐝"):
         st.markdown(resposta)
-    st.session_state.mensagens.append(("🦗", resposta))
+    st.session_state.mensagens.append(("🐝", resposta))
