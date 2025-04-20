@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import re
 
-# 🔍 Garante que Pydantic 2 está em uso
+# ✅ Verificação de versão correta do Pydantic
 import pydantic
 assert pydantic.VERSION.startswith("2."), f"Pydantic v2.x is required, but found: {pydantic.VERSION}"
 
@@ -16,7 +16,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain_core.documents import Document
 
-# 🔐 Chave da OpenAI
+# 🔐 Chave da OpenAI (vinda do ambiente)
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # 🔧 Função para carregar e limpar automaticamente o data.csv
@@ -114,7 +114,7 @@ st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal �
 
 # 🧹 Botão para limpar conversa
 if st.button("🧹 Limpar conversa"):
-    st.session_state.mensagens = []
+    st.session_state.clear()  # ✅ forma correta para Streamlit Cloud
     st.experimental_rerun()
 
 # Inicializa estado
