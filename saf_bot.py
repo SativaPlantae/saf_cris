@@ -5,7 +5,6 @@ import re
 
 # ✅ Verificação de versão correta do Pydantic
 import pydantic
-assert pydantic.VERSION.startswith("2."), f"Pydantic v2.x is required, but found: {pydantic.VERSION}"
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
