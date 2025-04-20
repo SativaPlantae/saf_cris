@@ -14,7 +14,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
-from langchain_core.documents import Document
+from langchain.schema import Document
 
 # 🔐 Chave da OpenAI (vinda do ambiente)
 openai_api_key = os.getenv("OPENAI_API_KEY")
