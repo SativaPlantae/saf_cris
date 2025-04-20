@@ -1,7 +1,8 @@
-import os
 import streamlit as st
+import os
 import pandas as pd
 import re
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
@@ -18,7 +19,6 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 def carregar_e_limpar_dados(caminho_csv: str) -> pd.DataFrame:
     df = pd.read_csv(caminho_csv, sep=";")
 
-    # Limpar colunas monetárias e numéricas
     def limpar_moeda(valor):
         if isinstance(valor, str):
             valor = valor.replace("R$", "").replace(".", "").replace(",", ".").strip()
@@ -36,7 +36,6 @@ def carregar_e_limpar_dados(caminho_csv: str) -> pd.DataFrame:
         if coluna in df.columns:
             df[coluna] = df[coluna].apply(limpar_moeda)
 
-    # Separar valor e unidade da produção por indivíduo
     def separar_valor_unidade(valor):
         if isinstance(valor, str):
             match = re.match(r"([\d,\.]+)\s*(\w+)", valor.strip())
@@ -64,7 +63,7 @@ def carregar_chain_com_memoria():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(api_key=openai_api_key)
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -102,16 +101,24 @@ st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
 
+# 🧹 Botão para limpar conversa
+if st.button("🧹 Limpar conversa"):
+    st.session_state.mensagens = []
+    st.experimental_rerun()
+
+# Inicializa estado
 if "mensagens" not in st.session_state:
     st.session_state.mensagens = []
 
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = carregar_chain_com_memoria()
 
+# Exibir histórico da conversa
 for remetente, mensagem in st.session_state.mensagens:
     with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant", avatar=remetente):
         st.markdown(mensagem)
 
+# Campo de entrada
 user_input = st.chat_input("Digite sua pergunta aqui...")
 
 if user_input:
