@@ -1,4 +1,5 @@
 import os
+os.system("pip install faiss-cpu")  # necessário para rodar no Streamlit Cloud
 import streamlit as st
 import pandas as pd
 import re
