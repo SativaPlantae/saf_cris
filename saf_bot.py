@@ -13,16 +13,17 @@ from langchain.schema import Document
 # 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# 🚀 Função para carregar e processar os dados
+# 🔄 Carrega a planilha e configura a cadeia com memória
 @st.cache_resource
 def carregar_chain_com_memoria():
-    df = pd.read_csv("data.csv", sep=";")  # Garante separador correto
+    df = pd.read_csv("data.csv", sep=";")  # ← garante leitura correta da planilha
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
     document = Document(page_content=texto_unico)
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
+    # ✅ Uso correto do OpenAIEmbeddings com langchain_openai
     embeddings = OpenAIEmbeddings(api_key=openai_api_key)
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
@@ -56,7 +57,7 @@ Resposta:"""
 
     return chain
 
-# 🌱 Interface do Streamlit
+# 🌱 Interface Streamlit
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
@@ -72,7 +73,7 @@ for remetente, mensagem in st.session_state.mensagens:
     with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant", avatar=remetente):
         st.markdown(mensagem)
 
-# Campo de input
+# Campo de entrada
 user_input = st.chat_input("Digite sua pergunta aqui...")
 
 if user_input:
