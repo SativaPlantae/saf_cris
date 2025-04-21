@@ -1,5 +1,5 @@
 streamlit==1.32.2
 pandas==2.2.2
 openai==1.1.1
-langchain==0.0.320
+langchain==0.0.297
 faiss-cpu==1.7.4
