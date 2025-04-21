@@ -3,14 +3,13 @@ import streamlit as st
 import pandas as pd
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts.prompt import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.schema import Document
 
-# 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
@@ -22,7 +21,7 @@ def carregar_chain_com_memoria():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # compatível com langchain 0.0.320
+    embeddings = OpenAIEmbeddings()  # ✅ NÃO precisa passar `api_key` com langchain 0.0.297
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -55,7 +54,7 @@ Resposta:"""
 
     return chain
 
-# 🌱 Interface
+# 🌱 Interface visual
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
