@@ -3,11 +3,11 @@ import streamlit as st
 import pandas as pd
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import Document
 
 # 🔐 Chave da OpenAI
@@ -22,7 +22,7 @@ def carregar_chain_com_memoria():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # ✅ OK com langchain==0.0.320
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # compatível com langchain 0.0.320
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -47,7 +47,7 @@ Resposta:"""
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     chain = ConversationalRetrievalChain.from_llm(
-        llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.5, openai_api_key=openai_api_key),
+        llm=ChatOpenAI(model_name="gpt-4o", temperature=0.5, openai_api_key=openai_api_key),
         retriever=retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": prompt}
