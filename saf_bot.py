@@ -13,7 +13,6 @@ from langchain.schema import Document
 # 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# 🔄 Carrega a planilha e configura a cadeia com memória
 @st.cache_resource
 def carregar_chain_com_memoria():
     df = pd.read_csv("data.csv", sep=";")
@@ -23,12 +22,11 @@ def carregar_chain_com_memoria():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    # ✅ Totalmente compatível com langchain==0.0.320 + pydantic v1
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # ✅ OK com langchain==0.0.320
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
-    prompt_template = PromptTemplate(
+    prompt = PromptTemplate(
         input_variables=["chat_history", "context", "question"],
         template="""
 Você é um assistente virtual treinado com base em uma planilha técnica sobre o Sistema Agroflorestal SAF Cristal.
@@ -52,12 +50,12 @@ Resposta:"""
         llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.5, openai_api_key=openai_api_key),
         retriever=retriever,
         memory=memory,
-        combine_docs_chain_kwargs={"prompt": prompt_template}
+        combine_docs_chain_kwargs={"prompt": prompt}
     )
 
     return chain
 
-# 🌱 Interface Streamlit
+# 🌱 Interface
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
