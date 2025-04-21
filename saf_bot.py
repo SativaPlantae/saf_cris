@@ -10,6 +10,8 @@ from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document
 
+st.write("🔐 API KEY detectada?" , bool(openai_api_key))
+
 # Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
