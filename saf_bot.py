@@ -23,7 +23,8 @@ def carregar_chain_com_memoria():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # ✅ compatível com langchain==0.1.13
+    # ✅ Totalmente compatível com langchain==0.0.320 + pydantic v1
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -56,7 +57,7 @@ Resposta:"""
 
     return chain
 
-# 🌱 Interface do Streamlit
+# 🌱 Interface Streamlit
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
