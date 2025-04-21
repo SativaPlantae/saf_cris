@@ -3,25 +3,25 @@ import streamlit as st
 import pandas as pd
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import Document
 
-st.write("🔐 API KEY detectada?" , bool(openai_api_key))
-
-# Chave da OpenAI
+# 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
 def carregar_chain_com_memoria():
-    df = pd.read_csv("data.csv", sep=";")
+    # ✅ Ajustado: CSV agora usa vírgulas como separador
+    df = pd.read_csv("data.csv")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
-    docs = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100).split_documents(
-        [Document(page_content=texto_unico)]
-    )
+    document = Document(page_content=texto_unico)
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    docs = splitter.split_documents([document])
 
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vectorstore = FAISS.from_documents(docs, embeddings)
@@ -47,14 +47,16 @@ Resposta:"""
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-    return ConversationalRetrievalChain.from_llm(
-        llm=ChatOpenAI(model_name="gpt-4", temperature=0.5, openai_api_key=openai_api_key),
+    chain = ConversationalRetrievalChain.from_llm(
+        llm=ChatOpenAI(model_name="gpt-4o", temperature=0.5, openai_api_key=openai_api_key),
         retriever=retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": prompt}
     )
 
-# Interface do app
+    return chain
+
+# 🌱 Interface
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
