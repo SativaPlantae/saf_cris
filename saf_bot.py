@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
@@ -16,15 +16,14 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 # 🔄 Carrega a planilha e configura a cadeia com memória
 @st.cache_resource
 def carregar_chain_com_memoria():
-    df = pd.read_csv("data.csv", sep=";")  # ← garante leitura correta da planilha
+    df = pd.read_csv("data.csv", sep=";")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
     document = Document(page_content=texto_unico)
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     docs = splitter.split_documents([document])
 
-    # ✅ Uso correto do OpenAIEmbeddings com langchain_openai
-    embeddings = OpenAIEmbeddings(api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # ✅ compatível com langchain==0.1.13
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -49,7 +48,7 @@ Resposta:"""
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     chain = ConversationalRetrievalChain.from_llm(
-        llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.5, api_key=openai_api_key),
+        llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.5, openai_api_key=openai_api_key),
         retriever=retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": prompt_template}
@@ -57,7 +56,7 @@ Resposta:"""
 
     return chain
 
-# 🌱 Interface Streamlit
+# 🌱 Interface do Streamlit
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
@@ -68,12 +67,10 @@ if "mensagens" not in st.session_state:
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = carregar_chain_com_memoria()
 
-# Exibe o histórico
 for remetente, mensagem in st.session_state.mensagens:
     with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant", avatar=remetente):
         st.markdown(mensagem)
 
-# Campo de entrada
 user_input = st.chat_input("Digite sua pergunta aqui...")
 
 if user_input:
