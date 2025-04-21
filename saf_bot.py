@@ -7,20 +7,19 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts.prompt import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.schema import Document
 
-# 🔐 Chave da OpenAI
+# Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
 def carregar_chain_com_memoria():
     df = pd.read_csv("data.csv", sep=";")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
-    document = Document(page_content=texto_unico)
-
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    docs = splitter.split_documents([document])
+    docs = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100).split_documents(
+        [Document(page_content=texto_unico)]
+    )
 
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vectorstore = FAISS.from_documents(docs, embeddings)
@@ -46,16 +45,14 @@ Resposta:"""
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-    chain = ConversationalRetrievalChain.from_llm(
+    return ConversationalRetrievalChain.from_llm(
         llm=ChatOpenAI(model_name="gpt-4", temperature=0.5, openai_api_key=openai_api_key),
         retriever=retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": prompt}
     )
 
-    return chain
-
-# 🌱 Interface
+# Interface do app
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
