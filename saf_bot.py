@@ -2,21 +2,20 @@ import os
 import streamlit as st
 import pandas as pd
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import Document
+import tempfile
 
-# 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
 def carregar_chain_com_memoria():
-    # ✅ Ajustado: CSV agora usa vírgulas como separador
-    df = pd.read_csv("data.csv")
+    df = pd.read_csv("data.csv", sep=";")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
     document = Document(page_content=texto_unico)
 
@@ -24,7 +23,11 @@ def carregar_chain_com_memoria():
     docs = splitter.split_documents([document])
 
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-    vectorstore = FAISS.from_documents(docs, embeddings)
+
+    # Cria diretório temporário para o Chroma
+    persist_directory = tempfile.mkdtemp()
+
+    vectorstore = Chroma.from_documents(docs, embeddings, persist_directory=persist_directory)
     retriever = vectorstore.as_retriever()
 
     prompt = PromptTemplate(
@@ -56,7 +59,6 @@ Resposta:"""
 
     return chain
 
-# 🌱 Interface
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
